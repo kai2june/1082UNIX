@@ -24,15 +24,11 @@ bool is_number(const std::string& s)
         ) == s.end();
 }
 
-int main(int argc, char* argv[])
+std::vector<std::string> search_pid()
 {
     std::vector<std::string> proc_fd;
     DIR* dir;
     struct dirent* ent;
-    struct stat sb;
-    struct stat sb_socket;
-    char* linkname;
-    ssize_t r;
 
     if ( (dir = opendir("/proc")) != nullptr )
     {
@@ -48,9 +44,21 @@ int main(int argc, char* argv[])
         closedir(dir);
     } else {
         perror("");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
-    
+    return proc_fd;
+}
+
+int main(int argc, char* argv[])
+{
+    std::vector<std::string> proc_fd = search_pid();
+    DIR* dir;
+    struct dirent* ent;
+    struct stat sb;
+    struct stat sb_socket;
+    char* linkname;
+    ssize_t r;
+
     for( std::vector<std::string>::iterator it = proc_fd.begin(); it!=proc_fd.end(); ++it)
     {
         if ( (dir = opendir( (*it).c_str() ) ) != nullptr ) 
@@ -71,27 +79,21 @@ int main(int argc, char* argv[])
                     exit(EXIT_FAILURE);
                 }
 
-
-
-                // std::cout << sb.st_size << std::endl;
-                // std::cout << "sb : " << sb.st_mode << std::endl << "S_IFMT : " << S_IFMT <<std::endl;
-                // std::cout << "sb.st_mode & S_IFMT : " << (sb.st_mode & S_IFMT) << std::endl;
-                // std::cout << "S_IFLNK : " << S_IFLNK << std::endl;
-                switch (sb.st_mode & S_IFMT) {
-                    case S_IFBLK:  printf("block device\n");            break;
-                    case S_IFCHR:  printf("character device\n");        break;
-                    case S_IFDIR:  printf("directory\n");               break;
-                    case S_IFIFO:  printf("FIFO/pipe\n");               break;
-                    case S_IFLNK:  printf("symlink\n");                 break;
-                    case S_IFREG:  printf("regular file\n");            break;
-                    case S_IFSOCK: printf("socket\n");                  break;
-                    default:       printf("unknown?\n");                break;
-                }
+                // switch (sb.st_mode & S_IFMT) {
+                //     case S_IFBLK:  printf("block device\n");            break;
+                //     case S_IFCHR:  printf("character device\n");        break;
+                //     case S_IFDIR:  printf("directory\n");               break;
+                //     case S_IFIFO:  printf("FIFO/pipe\n");               break;
+                //     case S_IFLNK:  printf("symlink\n");                 break;
+                //     case S_IFREG:  printf("regular file\n");            break;
+                //     case S_IFSOCK: printf("socket\n");                  break;
+                //     default:       printf("unknown?\n");                break;
+                // }
 
 
                 if ( (sb.st_mode & S_IFMT) == S_IFLNK )
                 {
-                    std::cout << "This is a socket: " << str << std::endl;
+                    // std::cout << "This is a socket: " << str << std::endl;
                     r = readlink(str.c_str(), linkname, sb.st_size + 100);
                     if (r < 0)
                     {
@@ -105,8 +107,14 @@ int main(int argc, char* argv[])
                         exit(EXIT_FAILURE);
                     }
                     linkname[sb.st_size] = '\0';
-                    printf("'%s' points to '%s'\n", str.c_str(), linkname);
-                    // exit(EXIT_SUCCESS);
+                    if ( linkname[0] == 's' && 
+                         linkname[1] == 'o' &&
+                         linkname[2] == 'c' &&
+                         linkname[3] == 'k' &&
+                         linkname[4] == 'e' &&
+                         linkname[5] == 't'
+                    )
+                        printf("'%s' points to '%s'\n", str.c_str(), linkname);
                 }
             }
         }
@@ -115,3 +123,8 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
+// 接下來
+// cat /proc/net/tcp以及cat/proc/net/udp看inode欄位有哪些inode
+// 與我目前撈到的socket:[xxxxxxxx]比對，若xxxxxxxx == inode則撈/proc/[pid]/comm(得到program name)以及/proc/[pid]/cmdline(執行時下的指令)
+// cat /proc/net/tcp的local_address與rem_address轉成十進位 xxx.xxx.xxx.xxx:xxxx
