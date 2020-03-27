@@ -1,15 +1,20 @@
 #include <iostream>
-#include <stdio.h>
-#include <sys/types.h>
-#include <dirent.h>
+#include <fstream>
 #include <cctype>
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <cstring>
+#include <cstdlib>
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <cstring>
-#include "hw1.hpp"
+#include <string.h>
+#include <regex.h>
+
 
 bool is_number(const std::string& s)
 {
@@ -49,13 +54,63 @@ std::vector<std::string> search_pid()
     return proc_fd;
 }
 
+bool match_inode(const std::vector<char*>& inodes, int& socket_inode)
+{
+    std::string s = std::to_string(socket_inode);
+    // s = s.c_str();
+    for( auto it = inodes.begin(); it!=inodes.end(); ++it )
+    {
+        std::cout << *it << std::endl;
+        if ( strcmp(*it, s.c_str()) == 0 )
+            return true;
+    }
+    // std::cout << "current: " << typeid(s.c_str()).name() << std::endl;
+    return false;
+}
+
 int main(int argc, char* argv[])
 {
+    // crawl /proc/net/tcp
+    std::FILE* fp = fopen("/proc/net/tcp", "r");
+    char buf[1000];
+    std::vector<char*> inodes;
+    if(!fp)
+    {
+        perror("file opening failed");
+        return EXIT_FAILURE;
+    }
+    fgets(buf, sizeof buf, fp);
+    while(fgets(buf, sizeof buf, fp) != nullptr)
+    {
+        std::size_t cnt = 0;
+        // std::cout << buf << std::endl;
+        char* pch;
+        pch = strtok(buf,  " ");
+        while ( pch != nullptr )
+        {
+            // printf("%zu:\n%s\n", cnt, pch);
+            if ( cnt == 9 )
+            {
+                char* tmp = new char[strlen(pch) + 1];
+                memcpy(tmp, pch, strlen(pch) + 1);
+                inodes.emplace_back(tmp);
+            }
+            pch = strtok(nullptr, " ");
+            ++cnt;
+        }
+    }
+    if(feof(fp))
+    {
+        // puts("end of file reached");
+    }
+    puts("inodes");
+    for( std::vector<char*>::iterator it = inodes.begin(); it != inodes.end(); ++it )
+        std::cout << *it << std::endl;
+
     std::vector<std::string> proc_fd = search_pid();
     DIR* dir;
     struct dirent* ent;
     struct stat sb;
-    struct stat sb_socket;
     char* linkname;
     ssize_t r;
 
@@ -68,32 +123,14 @@ int main(int argc, char* argv[])
                 std::string str(*it);
                 str.append("/").append(ent->d_name);
 
-                // if ( stat(str.c_str(), &sb_socket) == -1 )
-                // {
-                //     perror("stat");
-                //     exit(EXIT_FAILURE);
-                // }
                 if ( lstat(str.c_str(), &sb) == -1 )
                 {
                     perror("lstat");
                     exit(EXIT_FAILURE);
                 }
 
-                // switch (sb.st_mode & S_IFMT) {
-                //     case S_IFBLK:  printf("block device\n");            break;
-                //     case S_IFCHR:  printf("character device\n");        break;
-                //     case S_IFDIR:  printf("directory\n");               break;
-                //     case S_IFIFO:  printf("FIFO/pipe\n");               break;
-                //     case S_IFLNK:  printf("symlink\n");                 break;
-                //     case S_IFREG:  printf("regular file\n");            break;
-                //     case S_IFSOCK: printf("socket\n");                  break;
-                //     default:       printf("unknown?\n");                break;
-                // }
-
-
                 if ( (sb.st_mode & S_IFMT) == S_IFLNK )
                 {
-                    // std::cout << "This is a socket: " << str << std::endl;
                     r = readlink(str.c_str(), linkname, sb.st_size + 100);
                     if (r < 0)
                     {
@@ -114,12 +151,19 @@ int main(int argc, char* argv[])
                          linkname[4] == 'e' &&
                          linkname[5] == 't'
                     )
+                    { 
                         printf("'%s' points to '%s'\n", str.c_str(), linkname);
+                        int socket_inode = atoi(linkname+8);
+                        std::cout << "inode : " << socket_inode << std::endl;
+                        std::cout << match_inode(inodes, socket_inode) << std::endl;
+                    }
                 }
             }
         }
         std::cout << std::endl;
     }
+
+
 
     return 0;
 }
