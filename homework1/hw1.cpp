@@ -16,6 +16,7 @@
 #include <regex.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 
 #define CHAR_ARRAY_MAX_SIZE 1000
 
@@ -50,7 +51,52 @@ enum class TCP_UDP_FIELD
   , DROPS
 };
 
-std::vector<std::pair<char*, char*>> split_colon(const std::vector<char*>& address)
+void port_hex_to_dec(const char* input, char* output, size_t outlen=CHAR_ARRAY_MAX_SIZE)
+{
+    long int li;
+    li = strtol(input, nullptr, 16);
+    if ( li == 0 )
+        snprintf(output, outlen, "%c", '*');
+    else
+        snprintf(output, outlen, "%ld", li);
+    // printf("%s\n", output);
+    return;
+}   
+
+
+int ip_hex_to_dquad(
+    const char* input
+  , char* output
+  , size_t outlen=CHAR_ARRAY_MAX_SIZE
+  , const CONNECTION& connection_type=CONNECTION::TCP
+)
+{
+    if ( connection_type == CONNECTION::TCP || connection_type == CONNECTION::UDP )
+    {
+        unsigned int a, b, c, d;
+        if (sscanf(input, "%2x%2x%2x%2x", &a, &b, &c, &d) != 4)
+            return -1;
+        snprintf(output, outlen, "%u.%u.%u.%u", d, c, b, a);
+    } else if ( connection_type == CONNECTION::TCP6 || connection_type == CONNECTION::UDP6 ) {
+        // unsigned int a, b, c, d, e, f, g, h, i, j ,k, l, m, n, o, p;
+        // if (sscanf(input, "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x"
+        //     , &a, &b, &c, &d, &e, &f, &g, &h, &i, &j, &k, &l, &m, &n, &o, &p) != 16)
+        //     return -1;
+        // snprintf(output, outlen, "%u.%u.%u.%u.%u.%u.%u.%u.%u.%u.%u.%u.%u.%u.%u.%u"
+        //     , p, o, n, m, l, k, j, i, h, g, f, e, d, c, b, a);
+        char a[5], b[5], c[5], d[5], e[5], f[5], g[5], h[5];
+        if ( sscanf(input, "%4s%4s%4s%4s%4s%4s%4s%4s", a, b, c, d, e, f, g, h) != 8 )
+            return -1;
+        snprintf(output, outlen, "%s:%s:%s:%s:%s:%s:%s:%s", h, g, f, e, d, c, b, a);
+    }
+    return 0;
+}
+
+
+std::vector<std::pair<char*, char*>> split_colon(
+    const std::vector<char*>& address
+  , const CONNECTION& connection_type
+)
 {
     std::vector<std::pair<char*, char*>> ip_port;
     std::pair<char*, char*> ip_port_oneline;
@@ -58,18 +104,24 @@ std::vector<std::pair<char*, char*>> split_colon(const std::vector<char*>& addre
     {
         char* pch;
         pch = strchr(*it, ':');
-        std::cout << "found at "<< pch-(*it) << std::endl;
+        // std::cout << "found at "<< pch-(*it) << std::endl;
         
+
+        struct in_addr s;
         // char* ip = new char[pch-(*it)+1];
         char* ip = new char[CHAR_ARRAY_MAX_SIZE];
         strncpy(ip, *it, pch-(*it));
-        std::cout << "ip: " << ip << std::endl;
+        char* ip_decimal = new char[CHAR_ARRAY_MAX_SIZE];
+        ip_hex_to_dquad(ip, ip_decimal, CHAR_ARRAY_MAX_SIZE, connection_type);
+
         // char* port = new char[ sizeof(*it) - (pch-(*it)) + 1];
         char* port = new char[CHAR_ARRAY_MAX_SIZE];
         strncpy(port, (*it) + (pch-(*it)) + 1, strlen(*it) - (pch-(*it)) - 1);
+        char* port_decimal = new char[CHAR_ARRAY_MAX_SIZE];
+        port_hex_to_dec(port, port_decimal, CHAR_ARRAY_MAX_SIZE);
         // std::cout << "port: " << port << std::endl;
-        ip_port_oneline.first = ip;
-        ip_port_oneline.second = port;
+        ip_port_oneline.first = ip_decimal;
+        ip_port_oneline.second = port_decimal;
         ip_port.emplace_back(ip_port_oneline);
     }
     return ip_port;
@@ -306,27 +358,35 @@ std::vector<char*> search_cmdline(const std::vector<char*>& tcp_pid)
     return proc_cmdline;
 }
 
+
+void netstat(const CONNECTION& connection_type)
+{
+
+}
+
+
 int main(int argc, char* argv[])
 {
     ////// crawl /proc/net/tcp
+    void netstat();
     std::vector<char*> inodes = parse_TCPUDPFIELD(CONNECTION::TCP, TCP_UDP_FIELD::INODE);
-    std::cout << "inodes: " << std::endl;
-    for( std::vector<char*>::iterator it = std::begin(inodes); it != std::end(inodes); ++it )
-        std::cout << *it << std::endl;
+    // std::cout << "inodes: " << std::endl;
+    // for( std::vector<char*>::iterator it = std::begin(inodes); it != std::end(inodes); ++it )
+    //     std::cout << *it << std::endl;
 
     std::vector<char*> local_address = parse_TCPUDPFIELD(CONNECTION::TCP, TCP_UDP_FIELD::LOCAL_ADDRESS);
-    std::vector<std::pair<char*, char*>> local_ip_port = split_colon(local_address);
+    std::vector<std::pair<char*, char*>> local_ip_port = split_colon(local_address, CONNECTION::TCP);
     for ( std::vector<char*>::iterator it=std::begin(local_address); it!=std::end(local_address); ++it)
         std::cout << "this is local_address: " << *it << std::endl;
     for ( std::vector<std::pair<char*, char*>>::iterator it=std::begin(local_ip_port); it!=std::end(local_ip_port); ++it)
-        std::cout << "this is local_address: " << (*it).first << " : " << (*it).second << std::endl;
+        std::cout << "this is (local_ip : local_port) " << (*it).first << " : " << (*it).second << std::endl;
 
     std::vector<char*> remote_address = parse_TCPUDPFIELD(CONNECTION::TCP, TCP_UDP_FIELD::REMOTE_ADDRESS);
-    std::vector<std::pair<char*, char*>> remote_ip_port = split_colon(remote_address);
+    std::vector<std::pair<char*, char*>> remote_ip_port = split_colon(remote_address, CONNECTION::TCP);
     for ( std::vector<char*>::iterator it=std::begin(remote_address); it!=std::end(remote_address); ++it)
         std::cout << "this is remote_address: " << *it << std::endl;
     for ( std::vector<std::pair<char*, char*>>::iterator it=std::begin(remote_ip_port); it!=std::end(remote_ip_port); ++it)
-        std::cout << "this is local_address: " << (*it).first << " : " << (*it).second << std::endl;
+        std::cout << "this is (remote_ip : remote_port) " << (*it).first << " : " << (*it).second << std::endl;
     
 
 
