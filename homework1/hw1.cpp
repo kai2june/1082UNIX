@@ -171,7 +171,7 @@ std::vector<char*> parse_TCPUDPFIELD(const CONNECTION& connection_type, const TC
     }
     if(feof(fp))
     {
-        puts("end of file reached");
+        // puts("end of file reached");
     }
     return inodes;
 }
@@ -290,7 +290,7 @@ std::vector<char*> search_tcppid(const std::vector<char*>& proc_pid, const std::
     DIR* dir;
     struct dirent* ent;
     struct stat sb;
-    std::vector<char*> tcp_pid;
+    std::vector<char*> tcpudp_pid;
     for( std::vector<char*>::const_iterator it = std::begin(proc_pid); it!=std::end(proc_pid); ++it)
     {
         char path_to_pid[CHAR_ARRAY_MAX_SIZE] = "/proc/";
@@ -322,23 +322,23 @@ std::vector<char*> search_tcppid(const std::vector<char*>& proc_pid, const std::
                 // std::cout << "is this a tcp socket? " << tcp_socket << std::endl;
                 if ( tcp_socket )
                 {
-                    tcp_pid.emplace_back(*it);
+                    tcpudp_pid.emplace_back(*it);
                 }
             } // while readdir
         } // if opendir
-        std::cout << std::endl;
+        // std::cout << std::endl;
     } // for proc_pid
-    return tcp_pid;
+    return tcpudp_pid;
 }
 
 
-std::vector<char*> search_cmdline(const std::vector<char*>& tcp_pid)
+std::vector<char*> search_cmdline(const std::vector<char*>& tcpudp_pid)
 {
     std::vector<char*> proc_cmdline;
     std::FILE* cmd_file;
-    for ( std::vector<char*>::const_iterator it = std::begin(tcp_pid); it!=std::end(tcp_pid); ++it )
+    for ( std::vector<char*>::const_iterator it = std::begin(tcpudp_pid); it!=std::end(tcpudp_pid); ++it )
     {
-        std::cout << "tcp_pid: " << *it << std::endl;
+        // std::cout << "tcpudp_pid: " << *it << std::endl;
         char path_to_pid[CHAR_ARRAY_MAX_SIZE] = "/proc/";
         strcat(path_to_pid, *it);
         strcat(path_to_pid, "/cmdline");
@@ -359,47 +359,96 @@ std::vector<char*> search_cmdline(const std::vector<char*>& tcp_pid)
 }
 
 
-void netstat(const CONNECTION& connection_type)
+void print_table(
+    const CONNECTION& connection_type
+  , const std::vector<std::pair<char*, char*>>& local_ip_port
+  , const std::vector<std::pair<char*, char*>>& remote_ip_port
+  , const std::vector<char*>& tcpudp_pid
+  , const std::vector<char*>& proc_cmdline
+)
 {
+    // std::cout << local_ip_port.size() << "  " << remote_ip_port.size() << "  " << tcpudp_pid.size()
+    //     << "  " << proc_cmdline.size() <<std::endl;
 
+    for( std::size_t i = 0; i < tcpudp_pid.size(); ++i)
+    {
+        if ( connection_type == CONNECTION::TCP )
+            printf("%-6s", "tcp");
+        else if ( connection_type == CONNECTION::UDP )
+            printf("%-6s", "udp");
+        else if ( connection_type == CONNECTION::TCP6 )
+            printf("%-6s", "tcp6");
+        else if ( connection_type == CONNECTION::UDP6 )
+            printf("%-6s", "udp6");
+        printf("%s:%s\t\t\t%s:%s\t\t\t%s/%s\n"
+          , local_ip_port.at(i).first
+          , local_ip_port.at(i).second
+          , remote_ip_port.at(i).first
+          , remote_ip_port.at(i).second
+          , tcpudp_pid.at(i)
+          , proc_cmdline.at(i)
+        );
+    }
+}
+
+
+void netstat(const CONNECTION& connection_type=CONNECTION::TCP)
+{
+    ////// crawl /proc/net/tcp
+    std::vector<char*> inodes = parse_TCPUDPFIELD(connection_type, TCP_UDP_FIELD::INODE);
+    // std::cout << "inodes: " << std::endl;
+    // for( std::vector<char*>::iterator it = std::begin(inodes); it != std::end(inodes); ++it )
+    //     std::cout << *it << std::endl;
+
+    std::vector<char*> local_address = parse_TCPUDPFIELD(connection_type, TCP_UDP_FIELD::LOCAL_ADDRESS);
+    std::vector<std::pair<char*, char*>> local_ip_port = split_colon(local_address, connection_type);
+    // for ( std::vector<char*>::iterator it=std::begin(local_address); it!=std::end(local_address); ++it)
+    //     std::cout << "this is local_address: " << *it << std::endl;
+    // for ( std::vector<std::pair<char*, char*>>::iterator it=std::begin(local_ip_port); it!=std::end(local_ip_port); ++it)
+    //     std::cout << "this is (local_ip : local_port) " << (*it).first << " : " << (*it).second << std::endl;
+
+    std::vector<char*> remote_address = parse_TCPUDPFIELD(connection_type, TCP_UDP_FIELD::REMOTE_ADDRESS);
+    std::vector<std::pair<char*, char*>> remote_ip_port = split_colon(remote_address, connection_type);
+    // for ( std::vector<char*>::iterator it=std::begin(remote_address); it!=std::end(remote_address); ++it)
+    //     std::cout << "this is remote_address: " << *it << std::endl;
+    // for ( std::vector<std::pair<char*, char*>>::iterator it=std::begin(remote_ip_port); it!=std::end(remote_ip_port); ++it)
+    //     std::cout << "this is (remote_ip : remote_port) " << (*it).first << " : " << (*it).second << std::endl;
+
+    ////// do something with pid socket
+    std::vector<char*> proc_pid = search_pid();
+
+    ////// search tcpudp_pid among socket_pid
+    std::vector<char*> tcpudp_pid = search_tcppid(proc_pid, inodes);
+    
+    ////// crawl /proc/[pid]/cmdline
+    std::vector<char*> proc_cmdline = search_cmdline(tcpudp_pid);
+    // for ( std::vector<char*>::iterator it=std::begin(proc_cmdline); it!=std::end(proc_cmdline); ++it)
+    //     std::cout << "this is command line: " << *it << std::endl;
+    
+    print_table(connection_type, local_ip_port, remote_ip_port, tcpudp_pid, proc_cmdline);
 }
 
 
 int main(int argc, char* argv[])
 {
-    ////// crawl /proc/net/tcp
-    void netstat();
-    std::vector<char*> inodes = parse_TCPUDPFIELD(CONNECTION::TCP, TCP_UDP_FIELD::INODE);
-    // std::cout << "inodes: " << std::endl;
-    // for( std::vector<char*>::iterator it = std::begin(inodes); it != std::end(inodes); ++it )
-    //     std::cout << *it << std::endl;
+    printf("\n%s\n%s\t\t\t%s\t\t\t%s\n"
+      , "List of TCP connections:"
+      , "Proto Local Address"
+      , "Foreign Address"
+      , "PID/Program name and arguments"
+    );
+    netstat(CONNECTION::TCP);
+    netstat(CONNECTION::TCP6);
 
-    std::vector<char*> local_address = parse_TCPUDPFIELD(CONNECTION::TCP, TCP_UDP_FIELD::LOCAL_ADDRESS);
-    std::vector<std::pair<char*, char*>> local_ip_port = split_colon(local_address, CONNECTION::TCP);
-    for ( std::vector<char*>::iterator it=std::begin(local_address); it!=std::end(local_address); ++it)
-        std::cout << "this is local_address: " << *it << std::endl;
-    for ( std::vector<std::pair<char*, char*>>::iterator it=std::begin(local_ip_port); it!=std::end(local_ip_port); ++it)
-        std::cout << "this is (local_ip : local_port) " << (*it).first << " : " << (*it).second << std::endl;
-
-    std::vector<char*> remote_address = parse_TCPUDPFIELD(CONNECTION::TCP, TCP_UDP_FIELD::REMOTE_ADDRESS);
-    std::vector<std::pair<char*, char*>> remote_ip_port = split_colon(remote_address, CONNECTION::TCP);
-    for ( std::vector<char*>::iterator it=std::begin(remote_address); it!=std::end(remote_address); ++it)
-        std::cout << "this is remote_address: " << *it << std::endl;
-    for ( std::vector<std::pair<char*, char*>>::iterator it=std::begin(remote_ip_port); it!=std::end(remote_ip_port); ++it)
-        std::cout << "this is (remote_ip : remote_port) " << (*it).first << " : " << (*it).second << std::endl;
-    
-
-
-    ////// do something with pid socket
-    std::vector<char*> proc_pid = search_pid();
-
-    ////// search tcp_pid among socket_pid
-    std::vector<char*> tcp_pid = search_tcppid(proc_pid, inodes);
-    
-    ////// crawl /proc/[pid]/cmdline
-    std::vector<char*> proc_cmdline = search_cmdline(tcp_pid);
-    for ( std::vector<char*>::iterator it=std::begin(proc_cmdline); it!=std::end(proc_cmdline); ++it)
-        std::cout << "this is command line: " << *it << std::endl;
+    printf("\n%s\n%-49s%-49s%s\n"
+      , "List of UDP connections:"
+      , "Proto Local Address"
+      , "Foreign Address"
+      , "PID/Program name and arguments"
+    );
+        
+    netstat(CONNECTION::UDP);
+    netstat(CONNECTION::UDP6);
 
     return 0;
 }
