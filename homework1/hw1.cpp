@@ -15,6 +15,7 @@
 #include <string.h>
 #include <regex.h>
 
+#define CHAR_ARRAY_MAX_SIZE 1000
 
 enum class CONNECTION
 {
@@ -31,7 +32,7 @@ std::vector<char*> parse_inodes(const CONNECTION& connection_type)
     {
         fp = fopen("/proc/net/tcp", "r");
     }
-    char buf[1000];
+    char buf[CHAR_ARRAY_MAX_SIZE];
     if(!fp)
     {
         perror("file opening failed");
@@ -119,7 +120,7 @@ void print_filetype(const struct stat& sb)
 
 int search_socketinode(const mode_t& file_mode, const char* path_to_symboliclink)
 {
-    std::cout << "sb.st_size: " << file_mode << std::endl;
+    // std::cout << "sb.st_size: " << file_mode << std::endl;
     char* linkname;
     ssize_t r;
     if ( (file_mode & S_IFMT) == S_IFLNK )
@@ -152,61 +153,36 @@ int search_socketinode(const mode_t& file_mode, const char* path_to_symboliclink
             int socket_inode = atoi(linkname+8);
             std::cout << "Yes, it's socket. socket inode : " << socket_inode << std::endl;
             return socket_inode;
-    //         if ( match_inode(inodes, socket_inode) )
-    //         {
-    //             std::cout << "true" << std::endl;
-    //             // (*it).erase((*it).end() - 3);
-    //             // tcp_pid.emplace_back(*it);
-    //         }
         }
     } // if ISLNK
     return -1;
 }
 
 
-bool is_tcpsocket()
+bool is_tcpsocket(const std::vector<char*>& inodes, const int& socket_inode)
 {
-    
+    char s[20];
+    int cx = snprintf(s, 20, "%d", socket_inode);
+    // std::cout << s << std::endl;
+    for ( std::vector<char*>::const_iterator it = std::begin(inodes); it != std::end(inodes); ++it )
+    {
+        std::cout << *it <<std::endl;
+        if ( strcmp(*it, s) == 0 )
+            return true;
+    }
+    return false;
 }
 
 
-// bool match_inode(const std::vector<char*>& inodes, const int& socket_inode)
-// {
-//     char s[20];
-//     int cx = snprintf(s, 20, "%d", socket_inode);
-//     // std::cout << s << std::endl;
-//     for( auto it = inodes.begin(); it!=inodes.end(); ++it )
-//     {
-//         std::cout << *it << std::endl;
-//         if ( strcmp(*it, s) == 0 )
-//             return true;
-//     }
-//     // std::cout << "current: " << typeid(s).name() << std::endl;
-//     return false;
-// }
-
-
-int main(int argc, char* argv[])
+std::vector<char*> search_tcppid(const std::vector<char*>& proc_pid, const std::vector<char*>& inodes)
 {
-    //// crawl /proc/net/tcp
-    std::vector<char*> inodes = parse_inodes(CONNECTION::TCP);
-    puts("inodes");
-    for( std::vector<char*>::iterator it = inodes.begin(); it != inodes.end(); ++it )
-        std::cout << *it << std::endl;
-
-    //// do something with pid socket
-    std::vector<char*> proc_pid = search_pid();
-    // for( std::vector<char*>::iterator it=proc_pid.begin(); it!=proc_pid.end(); ++it)
-    //     std::cout << *it << std::endl;
-
-    //// search socket_pid
     DIR* dir;
     struct dirent* ent;
     struct stat sb;
     std::vector<char*> tcp_pid;
-    for( std::vector<char*>::iterator it = proc_pid.begin(); it!=proc_pid.end(); ++it)
+    for( std::vector<char*>::const_iterator it = std::begin(proc_pid); it!=std::end(proc_pid); ++it)
     {
-        char path_to_pid[300] = "/proc/";
+        char path_to_pid[CHAR_ARRAY_MAX_SIZE] = "/proc/";
         strcat(path_to_pid, *it);
         strcat(path_to_pid, "/fd/");
         // std::cout << path_to_pid << std::endl;
@@ -227,13 +203,69 @@ int main(int argc, char* argv[])
                 print_filetype(sb);
 
                 int socket_inode = search_socketinode(sb.st_mode, path_to_symboliclink);
-                bool tcp_socket;
-                if ( socket > 0 )
-                    tcp_socket = is_tcpsocket();
+                bool tcp_socket = false;
+                if ( socket_inode > 0 )
+                {
+                    tcp_socket = is_tcpsocket(inodes, socket_inode);
+                }
+                std::cout << "is this a tcp socket? " << tcp_socket << std::endl;
+                if ( tcp_socket )
+                {
+                    tcp_pid.emplace_back(*it);
+                }
             } // while readdir
         } // if opendir
         std::cout << std::endl;
+    } // for proc_pid
+    return tcp_pid;
+}
+
+
+std::vector<char*> search_cmdline(const std::vector<char*>& tcp_pid)
+{
+    std::vector<char*> proc_cmdline;
+    std::FILE* cmd_file;
+    for ( std::vector<char*>::const_iterator it = std::begin(tcp_pid); it!=std::end(tcp_pid); ++it )
+    {
+        std::cout << "tcp_pid: " << *it << std::endl;
+        char path_to_pid[CHAR_ARRAY_MAX_SIZE] = "/proc/";
+        strcat(path_to_pid, *it);
+        strcat(path_to_pid, "/cmdline");
+
+        char tmp[CHAR_ARRAY_MAX_SIZE];
+        cmd_file = fopen(path_to_pid, "r");
+        if ( fgets(tmp, sizeof tmp, cmd_file) == nullptr )
+        {
+            perror("cmdline file empty");
+            exit(EXIT_FAILURE);
+        }
+        char* cmd_line = new char[strlen(tmp)];
+        memcpy(cmd_line, tmp, strlen(tmp) + 1);
+        proc_cmdline.emplace_back(cmd_line);
+        fclose(cmd_file);
     }
+    return proc_cmdline;
+}
+
+int main(int argc, char* argv[])
+{
+    ////// crawl /proc/net/tcp
+    std::vector<char*> inodes = parse_inodes(CONNECTION::TCP);
+    puts("inodes");
+    for( std::vector<char*>::iterator it = std::begin(inodes); it != std::end(inodes); ++it )
+        std::cout << *it << std::endl;
+
+    ////// do something with pid socket
+    std::vector<char*> proc_pid = search_pid();
+
+    ////// search tcp_pid among socket_pid
+    std::vector<char*> tcp_pid = search_tcppid(proc_pid, inodes);
+    
+    ////// crawl /proc/[pid]/cmdline
+    std::vector<char*> proc_cmdline = search_cmdline(tcp_pid);
+
+    for ( std::vector<char*>::iterator it=std::begin(proc_cmdline); it!=std::end(proc_cmdline); ++it)
+        std::cout << "this is command line: " << *it << std::endl;
 
     return 0;
 }
