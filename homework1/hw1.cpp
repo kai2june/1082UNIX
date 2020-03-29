@@ -107,8 +107,6 @@ std::vector<std::pair<char*, char*>> split_colon(
         pch = strchr(*it, ':');
         // std::cout << "found at "<< pch-(*it) << std::endl;
         
-
-        struct in_addr s;
         // char* ip = new char[pch-(*it)+1];
         char* ip = new char[CHAR_ARRAY_MAX_SIZE];
         strncpy(ip, *it, pch-(*it));
@@ -180,7 +178,7 @@ std::vector<char*> parse_TCPUDPFIELD(const CONNECTION& connection_type, const TC
 
 bool is_number(const char* s)
 {
-    for(int i=0; i<strlen(s); ++i)
+    for(size_t i=0; i<strlen(s); ++i)
     {
         if (!std::isdigit(s[i]))
             return false;
@@ -274,7 +272,7 @@ int search_socketinode(const mode_t& file_mode, const char* path_to_symboliclink
 bool is_tcpsocket(const std::vector<char*>& inodes, const int& socket_inode)
 {
     char s[20];
-    int cx = snprintf(s, 20, "%d", socket_inode);
+    snprintf(s, 20, "%d", socket_inode);
     // std::cout << s << std::endl;
     for ( std::vector<char*>::const_iterator it = std::begin(inodes); it != std::end(inodes); ++it )
     {
@@ -473,6 +471,12 @@ int main(int argc, char* argv[])
         tcp_show = true;
         udp_show = true;
     }
+
+    /**********************************************************
+    ***********************************************************
+    ///////////////// command line string filter feature.
+    ***********************************************************
+    **********************************************************/
     for ( int index = optind; index < argc; ++index)
     {
         // printf("\nindex = %d\n", index);
