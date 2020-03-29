@@ -489,7 +489,7 @@ int main(int argc, char* argv[])
     }
     if ( udp_show == true)
     {
-        printf("%s\n%-49s%-49s%s\n"
+        printf("%s\n%s\t\t\t%s\t\t\t%s\n"
           , "List of UDP connections:"
           , "Proto Local Address"
           , "Foreign Address"
