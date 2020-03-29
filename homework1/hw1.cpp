@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <getopt.h>
 
 #define CHAR_ARRAY_MAX_SIZE 1000
 
@@ -365,6 +366,7 @@ void print_table(
   , const std::vector<std::pair<char*, char*>>& remote_ip_port
   , const std::vector<char*>& tcpudp_pid
   , const std::vector<char*>& proc_cmdline
+  , const char* filter_string=""
 )
 {
     // std::cout << local_ip_port.size() << "  " << remote_ip_port.size() << "  " << tcpudp_pid.size()
@@ -372,6 +374,10 @@ void print_table(
 
     for( std::size_t i = 0; i < tcpudp_pid.size(); ++i)
     {
+        if ( strstr(proc_cmdline.at(i), filter_string) == nullptr )
+        {
+            continue;
+        }
         if ( connection_type == CONNECTION::TCP )
             printf("%-6s", "tcp");
         else if ( connection_type == CONNECTION::UDP )
@@ -392,7 +398,7 @@ void print_table(
 }
 
 
-void netstat(const CONNECTION& connection_type=CONNECTION::TCP)
+void netstat(const CONNECTION& connection_type=CONNECTION::TCP, const char* filter_string="")
 {
     ////// crawl /proc/net/tcp
     std::vector<char*> inodes = parse_TCPUDPFIELD(connection_type, TCP_UDP_FIELD::INODE);
@@ -425,35 +431,73 @@ void netstat(const CONNECTION& connection_type=CONNECTION::TCP)
     // for ( std::vector<char*>::iterator it=std::begin(proc_cmdline); it!=std::end(proc_cmdline); ++it)
     //     std::cout << "this is command line: " << *it << std::endl;
     
-    print_table(connection_type, local_ip_port, remote_ip_port, tcpudp_pid, proc_cmdline);
+    print_table(connection_type, local_ip_port, remote_ip_port, tcpudp_pid, proc_cmdline, filter_string);
 }
 
 
 int main(int argc, char* argv[])
 {
-    printf("\n%s\n%s\t\t\t%s\t\t\t%s\n"
-      , "List of TCP connections:"
-      , "Proto Local Address"
-      , "Foreign Address"
-      , "PID/Program name and arguments"
-    );
-    netstat(CONNECTION::TCP);
-    netstat(CONNECTION::TCP6);
+    bool tcp_show = true, udp_show = true;
+    int opt;
+    int option_index = 0;
+    const char *optstring = "tu";
+    static struct option long_options[] = {
+        {"tcp", no_argument, nullptr, 't'}
+      , {"udp", no_argument, nullptr, 'u'}
+      , {0, 0, 0, 0}
+    };
 
-    printf("\n%s\n%-49s%-49s%s\n"
-      , "List of UDP connections:"
-      , "Proto Local Address"
-      , "Foreign Address"
-      , "PID/Program name and arguments"
-    );
-        
-    netstat(CONNECTION::UDP);
-    netstat(CONNECTION::UDP6);
+    char* filter_string = new char[CHAR_ARRAY_MAX_SIZE];
+    while ( ( opt = getopt_long(argc, argv, optstring, long_options, &option_index) ) != -1 )
+    {
+        if ( strcmp(argv[optind - 1], "-t") == 0 || strcmp(argv[optind - 1], "--tcp") == 0 )
+            udp_show = false;
+        if ( strcmp(argv[optind - 1], "-u") == 0 || strcmp(argv[optind - 1], "--udp") == 0 )
+            tcp_show = false;
+        // printf("opt = %c\n", opt);
+        // printf("optarg = %s\n", optarg);
+        // printf("optind = %d\n", optind);
+        // printf("argv[optind - 1] = %s\n",  argv[optind - 1]);
+        // printf("option_index = %d\n", option_index);
+    }
+    if ( tcp_show == false && udp_show == false )
+    {
+        tcp_show = true;
+        udp_show = true;
+    }
+    for ( int index = optind; index < argc; ++index)
+    {
+        // printf("\nindex = %d\n", index);
+        // printf("argv[index - 1] = %s\n",  argv[index]);
+        strcat(filter_string, argv[index]);
+        if ( index != argc -1 )
+            strcat(filter_string, " ");
+    }
+    // printf("filter string: %s\n\n", filter_string);
+
+
+    if ( tcp_show == true )
+    {
+        printf("%s\n%s\t\t\t%s\t\t\t%s\n"
+          , "List of TCP connections:"
+          , "Proto Local Address"
+          , "Foreign Address"
+          , "PID/Program name and arguments"
+        );
+        netstat(CONNECTION::TCP, filter_string);
+        netstat(CONNECTION::TCP6, filter_string);
+    }
+    if ( udp_show == true)
+    {
+        printf("%s\n%-49s%-49s%s\n"
+          , "List of UDP connections:"
+          , "Proto Local Address"
+          , "Foreign Address"
+          , "PID/Program name and arguments"
+        );
+        netstat(CONNECTION::UDP, filter_string);
+        netstat(CONNECTION::UDP6, filter_string);
+    }
 
     return 0;
 }
-
-// 接下來
-// cat /proc/net/tcp以及cat/proc/net/udp看inode欄位有哪些inode
-// 與我目前撈到的socket:[xxxxxxxx]比對，若xxxxxxxx == inode則撈/proc/[pid]/comm(得到program name)以及/proc/[pid]/cmdline(執行時下的指令)
-// cat /proc/net/tcp的local_address與rem_address轉成十進位 xxx.xxx.xxx.xxx:xxxx
