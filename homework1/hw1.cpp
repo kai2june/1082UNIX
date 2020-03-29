@@ -371,8 +371,16 @@ void print_table(
 {
     // std::cout << local_ip_port.size() << "  " << remote_ip_port.size() << "  " << tcpudp_pid.size()
     //     << "  " << proc_cmdline.size() <<std::endl;
-
-    for( std::size_t i = 0; i < tcpudp_pid.size(); ++i)
+    // std::cout << "\n" 
+    //     << local_ip_port.size() 
+    //     << "\n"
+    //     << remote_ip_port.size() 
+    //     << "\n" 
+    //     << tcpudp_pid.size()
+    //     << "\n"
+    //     << proc_cmdline.size() 
+    //     << std::endl;
+    for( std::size_t i = 0; i < local_ip_port.size(); ++i)
     {
         if ( strstr(proc_cmdline.at(i), filter_string) == nullptr )
         {
@@ -489,7 +497,7 @@ int main(int argc, char* argv[])
     }
     if ( udp_show == true)
     {
-        printf("%s\n%s\t\t\t%s\t\t\t%s\n"
+        printf("\n%s\n%s\t\t\t%s\t\t\t%s\n"
           , "List of UDP connections:"
           , "Proto Local Address"
           , "Foreign Address"
