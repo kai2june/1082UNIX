@@ -129,7 +129,7 @@ std::vector<std::pair<char*, char*>> split_colon(
 
 std::vector<char*> parse_TCPUDPFIELD(const CONNECTION& connection_type, const TCP_UDP_FIELD& field)
 {
-    std::FILE* fp;
+    std::FILE* fp = nullptr;
     std::vector<char*> inodes;
     if ( connection_type == CONNECTION::TCP )
     {
