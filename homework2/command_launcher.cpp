@@ -11,8 +11,6 @@
 #include <fcntl.h>
 #include <dirent.h>
 
-#include "inject.cpp"
-
 #define	FILE_A	"./trash.txt"
 #define DIR_A "dirrr"
 // #define	FILE_NULL	"/dev/null"
@@ -49,7 +47,6 @@ int main(int argc, char* argv[])
 
 
 
-    // struct stat st;
 	// char *argv[] = { FILE_A, NULL };
 
 	// chdir("~");
@@ -75,7 +72,8 @@ int main(int argc, char* argv[])
 	/// @brief checked
 	// rmdir(DIR_A); 
 	
-	// __xstat(FILE_A, &st);
+	struct stat st;
+	__xstat(3, FILE_A, &st);
 
 	/// @brief checked
 	// symlink(FILE_A, "symlink.txt"); 
@@ -97,3 +95,8 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
+
+/// @brief command line 選項-- 
+/// @brief 檢查 -d 給的path
+/// @brief exec系列, system()實作輸出error message要擋
+/// @brief exec系列, variadic參數要parse

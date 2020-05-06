@@ -15,8 +15,8 @@ preload:
 	LD_PRELOAD=./sandbox.so ./sandbox
 
 clean:
-	rm sandbox
 	rm sandbox.so
+	rm sandbox
 	rmdir dirrr
 	rm link.txt
 	rm trash.txt

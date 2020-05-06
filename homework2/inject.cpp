@@ -43,7 +43,7 @@ DECLARE_TYPE(readlink, ssize_t (*)(const char *pathname, char *buf, size_t bufsi
 DECLARE_TYPE(remove, int (*)(const char *pathname));
 DECLARE_TYPE(rename, int (*)(const char *oldpath, const char *newpath));
 DECLARE_TYPE(rmdir, int (*)(const char *pathname));
-DECLARE_TYPE(__xstat, int (*)(const char *pathname, struct stat *statbuf));
+DECLARE_TYPE(__xstat, int (*)(int ver, const char *pathname, struct stat *statbuf));
 DECLARE_TYPE(symlink, int (*)(const char *target, const char *linkpath));
 DECLARE_TYPE(unlink, int (*)(const char *pathname));
 DECLARE_TYPE(execl,  int (*)(const char *pathname, const char *arg, .../* (char  *) NULL */));
@@ -150,10 +150,10 @@ int rmdir(const char *pathname)
     int rtn = old_rmdir(pathname);
     return rtn;
 }
-int __xstat(const char *pathname, struct stat *statbuf)
+int __xstat(int ver, const char *pathname, struct stat *statbuf)
 {
     LOAD_LIB(__xstat);
-    int rtn = old___xstat(pathname, statbuf);
+    int rtn = old___xstat(ver, pathname, statbuf);
     return rtn;
 }
 int symlink(const char *target, const char *linkpath)
