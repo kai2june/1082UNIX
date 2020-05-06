@@ -12,6 +12,10 @@
 #include <type_traits>
 #include <dlfcn.h>
 #include <stdarg.h>
+#include <iostream>
+
+// extern std::string so_path;
+// extern std::string base_path;
 
 #define DECLARE_TYPE(name, prototype)\
         using name##_type = prototype;\
@@ -46,7 +50,9 @@ DECLARE_TYPE(__xstat, int (*)(const char *pathname, struct stat *statbuf));
 DECLARE_TYPE(symlink, int (*)(const char *target, const char *linkpath));
 DECLARE_TYPE(unlink, int (*)(const char *pathname));
 DECLARE_TYPE(execl,  int (*)(const char *pathname, const char *arg, .../* (char  *) NULL */));
-DECLARE_TYPE(execle, int (*)(const char *pathname, const char *arg, .../*, (char *) NULL */, char *const envp[]));
+/// @brief execle()'s parameter envp moved leftward
+/// @brief because variadic parameter(a.k.a. ...) should appear as the last parameter
+// DECLARE_TYPE(execle, int (*)(const char *pathname, const char *arg, char *const envp[], .../*, (char *) NULL */));
 DECLARE_TYPE(execlp, int (*)(const char *file, const char *arg, .../* (char  *) NULL */));
 DECLARE_TYPE(execv, int (*)(const char *pathname, char *const argv[]));
 DECLARE_TYPE(execve, int (*)(const char *pathname, char *const argv[], char *const envp[]));
@@ -66,6 +72,7 @@ int chmod(const char *pathname, mode_t mode)
 {
     LOAD_LIB(chmod);
     int rtn = old_chmod(pathname, mode);
+    std::cout << "Hiiii" << std::endl;
     return rtn;
 }
 int chown(const char *pathname, uid_t owner, gid_t group)
@@ -160,20 +167,47 @@ int unlink(const char *pathname)
 }
 int execl(const char *pathname, const char *arg, .../* (char  *) NULL */)
 {
+    /// @brief cannot pass ... as argument!~~~~~~~~~~~~~~
+    /// @brief use va_list
+    int count = 0;
+    va_list args;
+    va_start(args, arg);
+    char* tmp;
+    while( (tmp = va_arg(args, char*)) != (char*)NULL)
+    {
+        ++count;
+        printf("count:%d, %s\n", count, tmp);
+    }
     LOAD_LIB(execl);
-    int rtn = old_execl(pathname, arg, ...);
+    // int rtn = old_execl(pathname, arg, ...);
+    int rtn = old_execl(pathname, arg);
     return rtn;
 }
-int execle(const char *pathname, const char *arg, .../*, (char *) NULL */, char *const envp[])
-{
-    LOAD_LIB(execle);
-    int rtn = old_execle(pathname, arg, ..., envp);
-    return rtn;
-}
+// int execle(const char *pathname, const char *arg, char *const envp[], .../*, (char *) NULL */)
+// {
+//     /// @brief cannot pass ... as argument!~~~~~~~~~~~~~~
+//     /// @brief use va_list
+//     int count = 0;  
+//     va_list args;
+//     va_start(args, envp);
+//     char* tmp;
+//     while ( (tmp = va_arg(args, char*)) != (char*)NULL )
+//     {
+//         ++count;
+//         printf("count:%d, %s\n", count, tmp);
+//     }
+
+//     LOAD_LIB(execle);
+//     int rtn = old_execle(pathname, arg, (char*)NULL, envp);
+//     return rtn;
+// }
 int execlp(const char *file, const char *arg, .../* (char  *) NULL */)
 {
+    /// @brief cannot pass ... as argument!~~~~~~~~~~~~~~
+    /// @brief use va_list
     LOAD_LIB(execlp);
-    int rtn = old_execlp(file, arg, ...);
+    // int rtn = old_execlp(file, arg, ...);
+    int rtn = old_execlp(file, arg);
     return rtn;
 }
 int execv(const char *pathname, char *const argv[])

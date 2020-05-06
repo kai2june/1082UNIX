@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <getopt.h>
+#include <iostream>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -10,40 +11,41 @@
 #include <fcntl.h>
 #include <dirent.h>
 
-// #define	FILE_A	"/tmp/aaa"
+// #include "inject.cpp"
+
+#define	FILE_A	"./trash.txt"
 // #define	FILE_B	"/tmp/bbb"
 // #define	FILE_NULL	"/dev/null"
 
 
 int main(int argc, char* argv[])
 {
+	if( argc == 1)
+		std::cout << "no command given" << std::endl; 
+
     int opt;
-    char *optstring = "p:d:";
-    std::string so_path;
-    std::string base_path; 
-    std::string cmd;
+    char optstring[] = "p:d:";
 
     while ((opt = getopt(argc, argv, optstring)) != -1)
     {
-        if ( opt == 'p' )
-            so_path = optarg;
-        if ( opt == 'd' )
-            base_path = optarg;
+        // if ( opt == 'p' )
+        //     so_path = optarg;
+        // if ( opt == 'd' )
+        //     base_path = optarg;
         printf("opt = %c\n", opt);
         printf("optarg = %s\n", optarg);
         printf("optind = %d\n", optind);
         printf("argv[optind - 1] = %s\n\n",  argv[optind - 1]);
     }
-    if ( argv[optind] == "--")
-        cmd = argv[++optind];
-    return 0;
+    // if ( argv[optind] == "--")
+    //     cmd = argv[++optind];
 
 
     // struct stat st;
 	// char *argv[] = { FILE_A, NULL };
 	// char buf[128];
-	// chdir(".");
-	// chmod(FILE_A, 0644);
+	chdir("~");
+	chmod(FILE_A, 0777);
 	// chown(FILE_A, 0, 0);
 	// creat(FILE_A, O_RDONLY);
 	// fopen(FILE_A, "rt");
@@ -67,4 +69,5 @@ int main(int argc, char* argv[])
 	// execve(FILE_A, argv, NULL);
 	// system("echo -n");
 	// return -1;
+	return 0;
 }
