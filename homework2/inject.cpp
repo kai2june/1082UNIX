@@ -14,9 +14,6 @@
 #include <stdarg.h>
 #include <iostream>
 
-// extern std::string so_path;
-// extern std::string base_path;
-
 #define DECLARE_TYPE(name, prototype)\
         using name##_type = prototype;\
         name##_type old_##name = nullptr;
@@ -61,6 +58,12 @@ DECLARE_TYPE(system, int (*)(const char *command));
 
 int stderr_fd = 2;
 
+void init() __attribute__((constructor));
+void init()
+{
+    setenv("SO_PATH", "./sandbox.so", 1);
+    setenv("BASE_PATH", ".", 1);
+}
 
 int chdir(const char* path)
 {
@@ -70,9 +73,9 @@ int chdir(const char* path)
 }
 int chmod(const char *pathname, mode_t mode)
 {
+    // std::cout << getenv("SO_PATH") << ", " << getenv("BASE_PATH") << std::endl;
     LOAD_LIB(chmod);
     int rtn = old_chmod(pathname, mode);
-    std::cout << "Hiiii" << std::endl;
     return rtn;
 }
 int chown(const char *pathname, uid_t owner, gid_t group)
