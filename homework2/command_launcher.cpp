@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 
-#define	FILE_A	"./trash.txt"
+#define	FILE_A	"trash.txt"
 #define DIR_A "dirrr"
 // #define	FILE_NULL	"/dev/null"
 
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 
 	// chdir("~");
 	creat(FILE_A, O_RDWR);
-	chmod(FILE_A, 644);
+	chmod("..", 644);
 	chown(FILE_A, 0, 0);
 	// fopen(FILE_A, "r+");
 	link(FILE_A, "link.txt");
@@ -97,6 +97,6 @@ int main(int argc, char* argv[])
 }
 
 /// @brief command line 選項-- 
-/// @brief 檢查 -d 給的path
+/// @brief 檢查 -d 給的path  (DONE)
 /// @brief exec系列, system()實作輸出error message要擋
 /// @brief exec系列, variadic參數要parse
