@@ -4,7 +4,7 @@ CFLAG	= -Wall -g -std=c++17
 EXE	= -o $@
 BOOST	= -I /usr/include -lboost_system-mt -lboost_filesystem-mt
 
-all: sandbox.so sandbox preload
+all: sandbox.so sandbox
 
 install: 
 	apt-get update
