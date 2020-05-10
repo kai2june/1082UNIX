@@ -29,4 +29,3 @@ clean:
 	rm choice
 	rmdir dirrr
 	rm trash.txt
-	rm link.txt

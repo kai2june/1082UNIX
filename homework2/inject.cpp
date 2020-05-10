@@ -60,21 +60,14 @@ DECLARE_TYPE(system, int (*)(const char *command));
 
 int stderr_fd = 2;
 
-// __attribute__((constructor)) void init()
-// {
-//     printf("\n%d pre_proc_1\n", __LINE__);
-//     // std::cout << __LINE__ << std::endl;
-//     setenv("LD_PRELOAD", "./sandbox.so", 1);
-//     setenv("BASE_PATH", ".", 1);
-// }
-
 bool is_sub_directory(const char* pathname)
 {
     puts("MY OWN IS_SUB_DIRECTORY");
-    std::cout << "LD_PRELOAD=>" << getenv("LD_PRELOAD") << std::endl;
-    std::cout << "BASE_PATH=>" << getenv("BASE_PATH") << std::endl;
-    std::cout << "PWD=>" << getenv("PWD") << std::endl;
-    std::cout << "HOME=>" << getenv("HOME") << std::endl;
+    std::cout << "INJECT.CPP: LD_PRELOAD=>LD_PRELOAD=" << getenv("LD_PRELOAD") 
+              << " BASE_PATH=>BASE_PATH=" << getenv("BASE_PATH") 
+              << " PWD=>PWD=" << getenv("PWD") 
+              << " HOME=>HOME=" << getenv("HOME") 
+              << std::endl;
     if ( strlen(pathname) == 0 )
     {
         puts("\nin_sub_director(pathname)=>pathname should not be empty.");
@@ -160,9 +153,11 @@ bool is_sub_directory(const char* pathname)
         strcat(absolute_path_base, *it);
     }
 
-    std::cout << "\nBASE_PATH=>" << absolute_path_base << std::endl;
-    std::cout << "\nABSOLUTE_PATH=>" << absolute_path << std::endl;
+    std::cout << "INJECT.CPP: " << "BASE_PATH=>" << absolute_path_base 
+              << " INPUT_PATH=>" << absolute_path 
+              << std::endl;
 
+    puts("BOTTOM IS_SUB_DIRECTORY");
     return !(strstr(absolute_path, absolute_path_base) == nullptr);
 }
 
@@ -171,11 +166,13 @@ int chdir(const char* path)
     puts("MY OWN CHDIR.");
     if ( !is_sub_directory(path) )
     {
-        std::cerr << "access to " << path << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "chdir: " << "access to " << path << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(chdir);
     int rtn = old_chdir(path);
+    // std::cout << "PWD=>" << getenv("PWD") << std::endl;
+    puts("BOTTOM CHDIR");
     return rtn;
 }
 int chmod(const char *pathname, mode_t mode)
@@ -185,11 +182,12 @@ int chmod(const char *pathname, mode_t mode)
     std::cout << "BASE_PATH=>" << getenv("BASE_PATH") << std::endl;
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "chmod: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(chmod);
     int rtn = old_chmod(pathname, mode);
+    puts("BOTTOM CHMOD");
     return rtn;
 }
 int chown(const char *pathname, uid_t owner, gid_t group)
@@ -197,11 +195,12 @@ int chown(const char *pathname, uid_t owner, gid_t group)
     puts("MY OWN CHOWN.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "chown: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(chown);
     int rtn = old_chown(pathname, owner, group);
+    puts("BOTTOM CHOWN");
     return rtn;
 }
 int creat(const char *pathname, mode_t mode)
@@ -209,11 +208,12 @@ int creat(const char *pathname, mode_t mode)
     puts("MY OWN CREAT.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "creat: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(creat);
     int rtn = old_creat(pathname, mode);
+    puts("BOTTOM CREAT");
     return rtn;
 }
 FILE* fopen(const char *pathname, const char *mode)
@@ -221,11 +221,12 @@ FILE* fopen(const char *pathname, const char *mode)
     puts("MY OWN FOPEN.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return nullptr;
+        std::cerr << "fopen: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(fopen);
     FILE* rtn = old_fopen(pathname, mode);
+    puts("BOTTOM FOPEN");
     return rtn;
 }
 
@@ -234,16 +235,17 @@ int link(const char *oldpath, const char *newpath)
     puts("MY OWN LINK.");
     if ( !is_sub_directory(oldpath) )
     {
-        std::cerr << "access to " << oldpath << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "link: " << "access to " << oldpath << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     if ( !is_sub_directory(newpath) )
     {
-        std::cerr << "access to " << newpath << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "link: " << "access to " << newpath << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(link);
     int rtn = old_link(oldpath, newpath);
+    puts("BOTTOM LINK");
     return rtn;
 }
 int mkdir(const char *pathname, mode_t mode)
@@ -251,11 +253,12 @@ int mkdir(const char *pathname, mode_t mode)
     puts("MY OWN MKDIR.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "mkdir: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(mkdir);
     int rtn = old_mkdir(pathname, mode);
+    puts("BOTTOM MKDIR");
     return rtn;
 }
 int open(const char *pathname, int flags, mode_t mode)
@@ -263,11 +266,12 @@ int open(const char *pathname, int flags, mode_t mode)
     puts("MY OWN OPEN.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "open: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(open);
     int rtn = old_open(pathname, flags, mode);
+    puts("BOTTOM OPEN");
     return rtn;
 }
 int openat(int dirfd, const char *pathname, int flags, mode_t mode)
@@ -275,11 +279,12 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode)
     puts("MY OWN OPENAT.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "openat: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(openat);
     int rtn = old_openat(dirfd, pathname, flags, mode);
+    puts("BOTTOM OPENAT");
     return rtn;
 }
 DIR* opendir(const char *name)
@@ -287,11 +292,12 @@ DIR* opendir(const char *name)
     puts("MY OWN OPENDIR.");
     if ( !is_sub_directory(name) )
     {
-        std::cerr << "access to " << name << " is not allowd." << std::endl;
-        return nullptr;
+        std::cerr << "opendir: " << "access to " << name << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(opendir);
     DIR* rtn = old_opendir(name);
+    puts("BOTTOM OPENDIR");
     return rtn;
 }
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz)
@@ -299,11 +305,12 @@ ssize_t readlink(const char *pathname, char *buf, size_t bufsiz)
     puts("MY OWN READLINK.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "readlink: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(readlink);
     ssize_t rtn = old_readlink(pathname, buf, bufsiz);
+    puts("BOTTOM READLINK");
     return rtn;
 }
 int remove(const char *pathname)
@@ -311,11 +318,12 @@ int remove(const char *pathname)
     puts("MY OWN REMOVE.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "remove: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(remove);
     int rtn = old_remove(pathname);
+    puts("BOTTOM REMOVE");
     return rtn;
 }
 int rename(const char *oldpath, const char *newpath)
@@ -323,16 +331,17 @@ int rename(const char *oldpath, const char *newpath)
     puts("MY OWN RENAME.");
     if ( !is_sub_directory(oldpath) )
     {
-        std::cerr << "access to " << oldpath << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "rename: " << "access to " << oldpath << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     if ( !is_sub_directory(newpath) )
     {
-        std::cerr << "access to " << newpath << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "rename: " << "access to " << newpath << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(rename);
     int rtn = old_rename(oldpath, newpath);
+    puts("BOTTOM RENAME");
     return rtn;
 }
 int rmdir(const char *pathname)
@@ -340,11 +349,12 @@ int rmdir(const char *pathname)
     puts("MY OWN RMDIR.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "rmdir: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(rmdir);
     int rtn = old_rmdir(pathname);
+    puts("BOTTOM RMDIR");
     return rtn;
 }
 int __xstat(int ver, const char *pathname, struct stat *statbuf)
@@ -352,11 +362,12 @@ int __xstat(int ver, const char *pathname, struct stat *statbuf)
     puts("MY OWN __XSTAT.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "__xstat: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(__xstat);
     int rtn = old___xstat(ver, pathname, statbuf);
+    puts("BOTTOM __XSTAT");
     return rtn;
 }
 int symlink(const char *target, const char *linkpath)
@@ -364,16 +375,17 @@ int symlink(const char *target, const char *linkpath)
     puts("MY OWN SYMLINK.");
     if ( !is_sub_directory(target) )
     {
-        std::cerr << "access to " << target << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "symlink: " << "access to " << target << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     if ( !is_sub_directory(linkpath) )
     {
-        std::cerr << "access to " << linkpath << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "symlink: " << "access to " << linkpath << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(symlink);
     int rtn = old_symlink(target, linkpath);
+    puts("BOTTOM SYMLINK");
     return rtn;
 }
 int unlink(const char *pathname)
@@ -381,11 +393,12 @@ int unlink(const char *pathname)
     puts("MY OWN UNLINK.");
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "unlink: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(unlink);
     int rtn = old_unlink(pathname);
+    puts("BOTTOM UNLINK");
     return rtn;
 }
 int execl(const char *pathname, const char *arg, .../* (char  *) NULL */)
@@ -394,8 +407,8 @@ int execl(const char *pathname, const char *arg, .../* (char  *) NULL */)
     return -82193;
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "execl: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     /// @brief cannot pass ... as argument!~~~~~~~~~~~~~~
     /// @brief use va_list
@@ -411,6 +424,7 @@ int execl(const char *pathname, const char *arg, .../* (char  *) NULL */)
     LOAD_LIB(execl);
     // int rtn = old_execl(pathname, arg, ...);
     int rtn = old_execl(pathname, arg);
+    puts("BOTTOM EXECL");
     return rtn;
 }
 // int execle(const char *pathname, const char *arg, char *const envp[], .../*, (char *) NULL */)
@@ -418,10 +432,10 @@ int execl(const char *pathname, const char *arg, .../* (char  *) NULL */)
     // puts("MY OWN EXECLE.");
 //     return -1;
 //     if ( !is_sub_directory(pathname) )
-//     {
-//     std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-//     return -1;
-//     }
+    // {
+    // std::cerr << "execle: " << "access to " << pathname << " is not allowd." << std::endl;
+    //     exit(EXIT_FAILURE);
+    // }
 //     /// @brief cannot pass ... as argument!~~~~~~~~~~~~~~
 //     /// @brief use va_list
 //     int count = 0;  
@@ -436,6 +450,7 @@ int execl(const char *pathname, const char *arg, .../* (char  *) NULL */)
 
 //     LOAD_LIB(execle);
 //     int rtn = old_execle(pathname, arg, (char*)NULL, envp);
+    // puts("BOTTOM EXECLE");
 //     return rtn;
 // }
 int execlp(const char *file, const char *arg, .../* (char  *) NULL */)
@@ -444,14 +459,15 @@ int execlp(const char *file, const char *arg, .../* (char  *) NULL */)
     return -1;
     if ( !is_sub_directory(file) )
     {
-        std::cerr << "access to " << file << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "execlp: " << "access to " << file << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     /// @brief cannot pass ... as argument!~~~~~~~~~~~~~~
     /// @brief use va_list
     LOAD_LIB(execlp);
     // int rtn = old_execlp(file, arg, ...);
     int rtn = old_execlp(file, arg);
+    puts("BOTTOM EXECLP");
     return rtn;
 }
 int execv(const char *pathname, char *const argv[])
@@ -460,11 +476,12 @@ int execv(const char *pathname, char *const argv[])
     return -1;
     if ( !is_sub_directory(pathname) )
     {
-        std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "execv: " << "access to " << pathname << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(execv);
     int rtn = old_execv(pathname, argv);
+    puts("BOTTOM EXECV");
     return rtn;
 }
 // int execve(const char *pathname, char *const argv[], char *const envp[])
@@ -472,11 +489,12 @@ int execv(const char *pathname, char *const argv[])
     // puts("MY OWN EXECVE.");
 //     if ( !is_sub_directory(pathname) )
 //     {
-//         std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-//         return -1;
+//         std::cerr << "execve: " << "access to " << pathname << " is not allowd." << std::endl;
+        // exit(EXIT_FAILURE);
 //     }
 //     LOAD_LIB(execve);
 //     int rtn = old_execve(pathname, argv, envp);
+    // puts("BOTTOM EXECVE");
 //     return rtn;
 // }
 int execvp(const char *file, char *const argv[])
@@ -484,11 +502,12 @@ int execvp(const char *file, char *const argv[])
     puts("MY OWN EXECVP.");
     if ( !is_sub_directory(file) )
     {
-        std::cerr << "access to " << file << " is not allowd." << std::endl;
-        return -1;
+        std::cerr << "execvp: " << "access to " << file << " is not allowd." << std::endl;
+        exit(EXIT_FAILURE);
     }
     LOAD_LIB(execvp);
     int rtn = old_execvp(file, argv);
+    puts("BOTTOM EXECVP");
     return rtn;
 }
 int system(const char *command)
@@ -496,5 +515,6 @@ int system(const char *command)
     puts("MY OWN SYSTEM.");
     LOAD_LIB(system);
     int rtn = old_system(command);
+    puts("BOTTOM SYSTEM");
     return rtn;
 }

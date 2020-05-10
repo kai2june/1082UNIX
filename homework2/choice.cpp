@@ -31,11 +31,10 @@ bool is_number(const char* str)
 
 int main(int argc, char* argv[])
 {
-    std::cout << "OPTIND=>" << optind << std::endl;
-    std::cout << "LD_PRELOAD=>" << getenv("LD_PRELOAD") << std::endl;
-    for (int i = 0; i<argc; ++i)
-        std::cout << "i=>" << i << "ARGV[i]=>" << argv[i] << std::endl;
-    std::cout << "CHMOD or not=>" << strcmp(argv[1], "chmod") << std::endl;
+    // std::cout << "OPTIND=>" << optind << std::endl;
+    // std::cout << "LD_PRELOAD=>" << getenv("LD_PRELOAD") << std::endl;
+    // for (int i = 0; i<argc; ++i)
+    //     std::cout << "i=>" << i << "ARGV[i]=>" << argv[i] << std::endl;
     /// @brief indigenous steelmaking
 	if ( strcmp(argv[0], "chdir") == 0 )
 	{
@@ -44,7 +43,7 @@ int main(int argc, char* argv[])
 	} 
 	else if ( strcmp(argv[0], "chmod") == 0 )
 	{
-        std::cout << "ITS CHMOD" << std::endl;
+        // std::cout << "ITS CHMOD" << std::endl;
 		const char *pathname = argv[optind++];
 		mode_t mode = strtol(argv[optind++], NULL, 8);
 		chmod(pathname, mode);
@@ -58,6 +57,7 @@ int main(int argc, char* argv[])
 		if (!is_number(argv[optind]))
 		{
 			pwd = getpwnam(argv[optind]);
+            std::cout << "OWNER_UID=>" << pwd->pw_uid << std::endl;
 			owner = pwd->pw_uid;
 		}
 		else 
@@ -68,6 +68,7 @@ int main(int argc, char* argv[])
 		if (!is_number(argv[optind]))
 		{
 			pwd = getpwnam(argv[optind]);
+            std::cout << "GROUP_GID=>" << pwd->pw_gid << std::endl;
 			group = pwd->pw_gid;
 		}
 		else
@@ -102,10 +103,13 @@ int main(int argc, char* argv[])
 	}
 	else if ( strcmp(argv[0], "open") == 0 )
 	{
+        std::cout << "launch" << std::endl;
 		const char* pathname = argv[optind++];
+        std::cout << "pathname:" << pathname<< std::endl;
 		int flags = atoi(argv[optind++]);
-		std::cout << flags<< std::endl;
+		std::cout << "flags:" << flags<< std::endl;
 		mode_t mode = strtol(argv[optind++], NULL, 8);
+        std::cout << "mode:" << mode << std::endl;
 		open(pathname, flags, mode);
 	}
 	else if ( strcmp(argv[0], "openat") == 0 )
