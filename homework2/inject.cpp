@@ -70,6 +70,11 @@ int stderr_fd = 2;
 
 bool is_sub_directory(const char* pathname)
 {
+    puts("MY OWN IS_SUB_DIRECTORY");
+    std::cout << "LD_PRELOAD=>" << getenv("LD_PRELOAD") << std::endl;
+    std::cout << "BASE_PATH=>" << getenv("BASE_PATH") << std::endl;
+    std::cout << "PWD=>" << getenv("PWD") << std::endl;
+    std::cout << "HOME=>" << getenv("HOME") << std::endl;
     if ( strlen(pathname) == 0 )
     {
         puts("\nin_sub_director(pathname)=>pathname should not be empty.");
@@ -176,6 +181,8 @@ int chdir(const char* path)
 int chmod(const char *pathname, mode_t mode)
 {
     puts("MY OWN CHMOD.");
+    std::cout << "LD_PRELOAD=>" << getenv("LD_PRELOAD") << std::endl;
+    std::cout << "BASE_PATH=>" << getenv("BASE_PATH") << std::endl;
     if ( !is_sub_directory(pathname) )
     {
         std::cerr << "access to " << pathname << " is not allowd." << std::endl;
