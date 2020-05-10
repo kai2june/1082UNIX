@@ -36,7 +36,6 @@ DECLARE_TYPE(chmod, int (*)(const char *pathname, mode_t mode));
 DECLARE_TYPE(chown, int (*)(const char *pathname, uid_t owner, gid_t group));
 DECLARE_TYPE(creat, int (*)(const char *pathname, mode_t mode));
 DECLARE_TYPE(fopen, FILE* (*)(const char *pathname, const char *mode));
-// DECLARE_TYPE(fdopen, FILE* (*)(int fd, const char *mode));
 DECLARE_TYPE(link, int (*)(const char *oldpath, const char *newpath));
 DECLARE_TYPE(mkdir, int (*)(const char *pathname, mode_t mode));
 DECLARE_TYPE(open, int (*)(const char *pathname, int flags, mode_t mode));
@@ -222,18 +221,7 @@ FILE* fopen(const char *pathname, const char *mode)
     FILE* rtn = old_fopen(pathname, mode);
     return rtn;
 }
-// FILE* fdopen(int fd, const char *mode)
-// {
-//     puts("MY OWN FDOPEN");
-//     if ( !is_sub_directory(pathname) )
-//     {
-//         std::cerr << "access to " << pathname << " is not allowd." << std::endl;
-//         return nullptr;
-//     }
-//     LOAD_LIB(fopen);
-//     FILE* rtn = old_fopen(pathname, mode);
-//     return rtn;
-// }
+
 int link(const char *oldpath, const char *newpath)
 {
     puts("MY OWN LINK.");

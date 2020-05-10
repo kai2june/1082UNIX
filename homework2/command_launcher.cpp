@@ -84,6 +84,16 @@ int main(int argc, char* argv[])
 		strcpy(cmd, argv[optind++]);
 	std::cout << "\ncmd=>" << cmd << std::endl;
 
+	// const char *pathname = argv[optind++];
+	// const char* args[] = {cmd, pathname, argv[optind], (char*)NULL};
+	// std::cout << "\nCMD=>" << cmd << "\nPATHNAME=>" << pathname << "\nMODE=>" << argv[optind] << std::endl;
+	// char* LD = new char[200];
+	// strcpy(LD, "LD_PRELOAD=");
+	// strcat(LD, getenv("LD_PRELOAD"));
+	// std::cout << "\nLD=>" << LD << std::endl; 
+	// const char* envp[] = {LD, NULL};
+	// execve("/root/1082UNIX/homework2/sandbox.so", args, envp);
+
 	if ( strcmp(cmd, "chdir") == 0 )
 	{
 		const char* path = argv[optind++];
@@ -92,8 +102,7 @@ int main(int argc, char* argv[])
 	else if ( strcmp(cmd, "chmod") == 0 )
 	{
 		const char *pathname = argv[optind++];
-		mode_t mode = 0;
-		mode |= strtol(argv[optind++], NULL, 8);
+		mode_t mode = strtol(argv[optind++], NULL, 8);
 		chmod(pathname, mode);
 	}
 	else if ( strcmp(cmd, "chown") == 0 )
@@ -126,8 +135,7 @@ int main(int argc, char* argv[])
 	else if( strcmp(cmd, "creat") == 0 )
 	{
 		const char* pathname = argv[optind++];
-		mode_t mode = 0;
-		mode |= strtol(argv[optind++], NULL, 8);
+		mode_t mode = strtol(argv[optind++], NULL, 8);
 		creat(pathname, mode);
 	}
 	else if( strcmp(cmd, "fopen") == 0 )
@@ -145,8 +153,7 @@ int main(int argc, char* argv[])
 	else if ( strcmp(cmd, "mkdir") == 0 )
 	{
 		const char* pathname = argv[optind++];
-		mode_t mode = 0;
-		mode |= strtol(argv[optind++], NULL, 8);
+		mode_t mode = strtol(argv[optind++], NULL, 8);
 		mkdir(pathname, mode);
 	}
 	else if ( strcmp(cmd, "open") == 0 )
@@ -154,8 +161,7 @@ int main(int argc, char* argv[])
 		const char* pathname = argv[optind++];
 		int flags = atoi(argv[optind++]);
 		std::cout << flags<< std::endl;
-		mode_t mode = 0;
-		mode |= strtol(argv[optind++], NULL, 8);
+		mode_t mode = strtol(argv[optind++], NULL, 8);
 		open(pathname, flags, mode);
 	}
 	else if ( strcmp(cmd, "openat") == 0 )
@@ -163,8 +169,7 @@ int main(int argc, char* argv[])
 		int dirfd = atoi(argv[optind++]);
 		const char *pathname = argv[optind++];
 		int flags = atoi(argv[optind++]);
-		mode_t mode = 0;
-		mode |= strtol(argv[optind++], NULL, 8);
+		mode_t mode = strtol(argv[optind++], NULL, 8);
 		openat(dirfd, pathname, flags, mode);
 	}
 	else if ( strcmp(cmd, "opendir") == 0 )
