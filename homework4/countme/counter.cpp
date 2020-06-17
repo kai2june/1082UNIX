@@ -25,17 +25,17 @@ int main(int argc, char* argv[])
     {
         long long counter = 0LL;
         int wait_status;
-        if(waitpid(child, &wait_status, 0) < 0) // execute this line to make child stopped to call WIFSTOPPED later
+        if(waitpid(child, &wait_status, 0) < 0) // check if child can normally complete.
         {
             std::cerr << "yes" << std::endl; // this line will not be printed if child_pid >= 0 
             exit(-4);
         }
-        ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL); // commented out can still get the result, just that child will not be killed.
-        while (WIFSTOPPED(wait_status)) // initially true set by above waitpid(). And stopped every singlestep. Reture false when child is thoroughly traced.
+        ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_EXITKILL); // kill child after parent leave.
+        while (WIFSTOPPED(wait_status)) // stopped every PTRACE_SINGLESTEP. 
         {
             // std::cerr << "wait_status:" << wait_status << std::endl; // wait_status always = 1407
             counter++;
-            if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0) // trace one step at a time
+            if(ptrace(PTRACE_SINGLESTEP, child, 0, 0) < 0) // ptrace one step at a time
                 exit(-5);
             if(waitpid(child, &wait_status, 0) < 0) // wait for child executing one step
                 exit(-6);
