@@ -1,0 +1,14 @@
+* Implemented features:
+
+(All)
+V 1. Load and run the program.
+V 2. Start the program, continue execution, and step into functions.
+V 3. Dump memory content.
+V 4. Set and get value from registers.
+V 5. Disassemble assembly from the executable or from a memory region.
+V 6. Handle break points.
+
+* Environment
+
+- Ubuntu 16.04.6 LTS
+- g++ (Ubuntu 5.4.0-6ubuntu1~16.04.11) 5.4.0 20160609
