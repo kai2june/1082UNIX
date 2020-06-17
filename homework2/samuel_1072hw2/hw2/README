@@ -1,0 +1,23 @@
+Monitored function list:
+Minimum requirements (with stat -> __xstat, lstat -> __xlstat)
+pread
+fflush
+fputs_unlocked
+fwrite_unlocked
+
+Functional:
+Monitored executable can work as usual.
+Provide basic list for function call parameters and return values.
+Provide comprehensive list for function call parameters and return values.
+Output can be configured using MONITOR_OUTPUT environmental variable.
+Use Makefile to manage the building process.
+
+Make rules:
+all (Compiled filename: fsmon.so)
+clean
+
+Language:
+C++17 (g++7 or newer required)
+
+Environment:
+Ubuntu 16.04.6 LTS

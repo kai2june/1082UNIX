@@ -1,0 +1,13 @@
+# open("/etc/services", 0) = [fd] 4 (/etc/services)
+# read("/etc/services", 0x7ffeda8ff350, 8192) = [Byte] 8192
+# fwrite_unlocked(0x7ffeda8ff350, 1, 8192, "<STDOUT>") = [int] 8192
+# read("/etc/services", 0x7ffeda8ff350, 8192) = [Byte] 8192
+# fwrite_unlocked(0x7ffeda8ff350, 1, 8192, "<STDOUT>") = [int] 8192
+# read("/etc/services", 0x7ffeda8ff350, 8192) = [Byte] 3221
+# fwrite_unlocked(0x7ffeda8ff350, 1, 3221, "<STDOUT>") = [int] 3221
+# read("/etc/services", 0x7ffeda8ff350, 8192) = [Byte] 0
+# close("/etc/services") = [int] 0
+# fflush("<STDOUT>") = [int] 0
+# fclose("<STDOUT>") = [int] 0
+# fflush("<STDERR>") = [int] 0
+# fclose("<STDERR>") = [int] 0
