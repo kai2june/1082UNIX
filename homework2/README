@@ -1,0 +1,27 @@
+Works on ubuntu 18.04 and c++17 (g++7.4.0)
+
+monitored library calls=>
+minimum requirements ( stat -> __xstat )
+reject exec*, system
+
+grading policy=>
+1. Use Makefile so that we can use 'make' to build the program.
+2. Sandboxed executable work as usual, any directory access not granted will be blocked
+I use is_sub_director() in inject.cpp to check whether the access is granted.
+3. implement all monitored functions in inject.cpp
+4. implement exec* and system in inject.cpp
+5. When the directory's permission is not granted, I'll show message on console and return error code
+Access not allowed for all function (same for exec* and system)
+errno = EACCES
+return value : -1
+
+Makefile=>
+all:
+inject.cpp -> ./sandbox.so
+command_launcher.cpp -> ./sandbox
+choice.cpp -> ./choice (will be launched by ./sandbox)
+
+clean:
+rm ./sandbox.so ./sandbox ./choice
+
+

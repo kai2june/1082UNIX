@@ -15,10 +15,11 @@
 #include <stdarg.h>
 #include <vector>
 #include <pwd.h>
+#include <errno.h>
 
 __attribute__((constructor)) void init()
 {
-    printf("__attribute__((constructor)) %d pre_proc_1\n", __LINE__);
+    // printf("__attribute__((constructor)) %d pre_proc_1\n", __LINE__);
     setenv("LD_PRELOAD", "./sandbox.so", 1);
 	setenv("BASE_PATH", ".", 1);
 }
@@ -68,7 +69,7 @@ int main(int argc, char* argv[])
 	}
 	if (argv[optind] != NULL)
 		strcpy(cmd, argv[optind++]);
-	std::cout << "COMMAND_LAUNCHER.CPP: CMD=>" << cmd << std::endl;
+	// std::cout << "COMMAND_LAUNCHER.CPP: CMD=>" << cmd << std::endl;
 
 	/*
 	/// @brief I want to execve a new process
@@ -101,11 +102,11 @@ int main(int argc, char* argv[])
 	char* HOME = new char[200];
 	strcpy(HOME, "HOME=");
 	strcat(HOME, getenv("HOME"));
-	std::cout << "COMMAND_LAUNCHER.CPP: LD_PRELOAD=>" << LD_PRELOAD 
-			  << " BASE_PATH=>" << BASE_PATH 
-			  << " PWD=>" << PWD 
-			  << " HOME=>" << HOME 
-			  << std::endl; 
+	// std::cout << "COMMAND_LAUNCHER.CPP: LD_PRELOAD=>" << LD_PRELOAD 
+	// 		  << " BASE_PATH=>" << BASE_PATH 
+	// 		  << " PWD=>" << PWD 
+	// 		  << " HOME=>" << HOME 
+	// 		  << std::endl; 
 	char* envp[] = {LD_PRELOAD, BASE_PATH, PWD, HOME, NULL};
 
 	execve("./choice", args, envp);

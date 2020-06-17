@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <vector>
 #include <pwd.h>
+#include <errno.h>
 
 bool is_number(const char* str)
 {
@@ -165,47 +166,83 @@ int main(int argc, char* argv[])
 		const char* pathname = argv[optind++];
 		unlink(pathname);
 	}
-	else if ( strcmp(argv[0], "execl") == 0 )
+	// else if ( strcmp(argv[0], "execl") == 0 )
+	// {
+	// 	std::cerr << "execl is not allowed" << std::endl;
+	// 	exit(-2);
+	// }
+	// else if ( strcmp(argv[0], "execle") == 0 )
+	// {
+	// 	std::cerr << "execle is not allowed" << std::endl;
+	// 	exit(-2);
+	// }
+	// else if ( strcmp(argv[0], "execlp") == 0 )
+	// {
+	// 	std::cerr << "execlp is not allowed" << std::endl;
+	// 	exit(-2);
+	// }
+	// else if ( strcmp(argv[0], "execv") == 0 )
+	// {
+	// 	std::cerr << "execv is not allowed" << std::endl;
+	// 	exit(-2);
+	// }
+	// else if ( strcmp(argv[0], "execve") == 0 )
+	// {
+	// 	char* args[20];
+	// 	args[0] = new char[200];
+	// 	strcpy(args[0], argv[1]);
+	// 	int cnt = 1;
+	// 	for( int it = 2; it < argc; ++it, ++cnt)
+	// 	{
+	// 		std::cout << "\nIT=>" << it << "CNT=>" << cnt << std::endl;  
+	// 		std::cout << "ARGV[it]=>" << argv[it] << std::endl;
+	// 		args[cnt] = new char[200];
+	// 		strcpy(args[cnt], argv[it]);
+	// 		std::cout << "ARGS[cnt]=>" << args[cnt] << std::endl;
+	// 	}
+	// 	std::cout << "\nCNT=>" << cnt << std::endl;
+	// 	args[cnt] = (char*)NULL;
+
+	// 	char* LD_PRELOAD = new char[200];
+	// 	strcpy(LD_PRELOAD, "LD_PRELOAD=");
+	// 	strcat(LD_PRELOAD, getenv("LD_PRELOAD"));
+	// 	char* BASE_PATH = new char[200];
+	// 	strcpy(BASE_PATH, "BASE_PATH=");
+	// 	strcat(BASE_PATH, getenv("BASE_PATH"));
+	// 	char* PWD = new char[200];
+	// 	strcpy(PWD, "PWD=");
+	// 	strcat(PWD, getenv("PWD"));
+	// 	char* HOME = new char[200];
+	// 	strcpy(HOME, "HOME=");
+	// 	strcat(HOME, getenv("HOME"));
+	// 	std::cout << "COMMAND_LAUNCHER.CPP: LD_PRELOAD=>" << LD_PRELOAD 
+	// 			<< " BASE_PATH=>" << BASE_PATH 
+	// 			<< " PWD=>" << PWD 
+	// 			<< " HOME=>" << HOME 
+	// 			<< std::endl; 
+	// 	char* envp[] = {LD_PRELOAD, BASE_PATH, PWD, HOME, NULL};
+	// 	execve("./choice", args, envp);
+	// }
+	// else if ( strcmp(argv[0], "execp") == 0 )
+	// {
+	// 	std::cerr << "execp is not allowed" << std::endl;
+	// 	exit(-2);
+	// }
+	// else if ( strcmp(argv[0], "system") == 0 )
+	// {
+	// 	char* command = new char[1000];
+	// 	strcpy(command, argv[0]);
+	// 	for (int it = 1; it < argc; ++it)
+	// 	{
+	// 		strcat(command, " ");
+	// 		strcat(command, argv[it]);
+	// 	}
+	// 	system(command); 
+	// }
+	else
 	{
-		std::cerr << "execl is not allowed" << std::endl;
-		exit(-2);
+		std::cerr << argv[0]<< ": command not found" << std::endl;
 	}
-	else if ( strcmp(argv[0], "execle") == 0 )
-	{
-		std::cerr << "execle is not allowed" << std::endl;
-		exit(-2);
-	}
-	else if ( strcmp(argv[0], "execlp") == 0 )
-	{
-		std::cerr << "execlp is not allowed" << std::endl;
-		exit(-2);
-	}
-	else if ( strcmp(argv[0], "execv") == 0 )
-	{
-		std::cerr << "execv is not allowed" << std::endl;
-		exit(-2);
-	}
-	else if ( strcmp(argv[0], "execve") == 0 )
-	{
-		std::cerr << "execve is not allowed" << std::endl;
-		exit(-2);
-	}
-	else if ( strcmp(argv[0], "execp") == 0 )
-	{
-		std::cerr << "execp is not allowed" << std::endl;
-		exit(-2);
-	}
-	else if ( strcmp(argv[0], "system") == 0 )
-	{
-		std::cerr << "system is not allowed" << std::endl;
-		exit(-2);
-	}
-	else if ( strcmp(argv[0], "sh") == 0 )
-	{
-		std::cerr << "sh is not allowed" << std::endl;
-		exit(-2);
-	}
-	else;
 
 
     return 0;
